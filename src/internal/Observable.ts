@@ -335,10 +335,18 @@ export class Observable<T> implements Subscribable<T> {
   toPromise(promiseCtor?: PromiseConstructorLike): Promise<T> {
     promiseCtor = getPromiseCtor(promiseCtor);
 
-    return new promiseCtor((resolve, reject) => {
+    let sub: Subscription;
+
+    let promise = new promiseCtor((resolve, reject) => {
       let value: any;
-      this.subscribe((x: T) => value = x, (err: any) => reject(err), () => resolve(value));
-    }) as Promise<T>;
+      sub = this.subscribe((x: T) => value = x, (err: any) => reject(err), () => resolve(value));
+    }) as any;
+
+    promise.abandon = () => {
+        sub.unsubscribe();
+    };
+
+    return promise as Promise<T>;
   }
 }
 
